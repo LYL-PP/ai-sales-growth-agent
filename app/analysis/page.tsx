@@ -93,6 +93,9 @@ export default function AnalysisPage() {
     localStorage.setItem("growth-agent-imported-conversations", JSON.stringify(importedConversations));
   }, [importedConversations]);
 
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
   const clearImported = () => {
     setImportedUsers([]);
     setImportedConversations({});
@@ -243,7 +246,7 @@ export default function AnalysisPage() {
                 <Plus className="h-3.5 w-3.5" />
                 导入
               </button>
-              {importedUsers.length > 0 && (
+              {mounted && importedUsers.length > 0 && (
                 <button
                   onClick={clearImported}
                   className="flex items-center gap-1 rounded-md px-2 py-1 text-[10px] text-muted-foreground transition-colors hover:bg-red-500/10 hover:text-red-400"
