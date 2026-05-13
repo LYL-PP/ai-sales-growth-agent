@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { use, useMemo, useState } from "react";
+import { use, useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { mockUserProfiles, mockUsers } from "@/lib/mock";
 import { Card, CardContent } from "@/components/ui/card";
@@ -171,6 +171,9 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
   const { id } = use(params);
   const router = useRouter();
 
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
   const [importedUsers, setImportedUsers] = useState<User[]>(() => {
     if (typeof window === "undefined") return [];
     try {
@@ -179,7 +182,10 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
     } catch { return []; }
   });
 
-  const allUsers = useMemo(() => [...mockUsers, ...importedUsers], [importedUsers]);
+  const allUsers = useMemo(
+    () => mounted ? [...mockUsers, ...importedUsers] : mockUsers,
+    [mounted, importedUsers]
+  );
 
   const profile = useMemo(() => {
     const existing = mockUserProfiles[id];
