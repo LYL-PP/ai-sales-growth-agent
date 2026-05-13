@@ -1,7 +1,8 @@
 ﻿"use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { mockUsers, mockConversations } from "@/lib/mock";
+import { parseImportedFile, generateSampleText } from "@/lib/import-parser";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -25,8 +26,13 @@ import {
   UserCheck,
   ChevronDown,
   Zap,
+  Plus,
+  Upload,
+  X,
+  FileText,
+  Download,
 } from "lucide-react";
-import type { AIAnalysis, UserIntent, UserStage, RiskLevel } from "@/types";
+import type { AIAnalysis, UserIntent, UserStage, RiskLevel, Message, User, Conversation } from "@/types";
 
 const intentMap: Record<UserIntent, { label: string; color: string }> = {
   price_objection: { label: "价格异议", color: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
@@ -57,14 +63,74 @@ export default function AnalysisPage() {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
+  // Import state
+  const [importedUsers, setImportedUsers] = useState<User[]>([]);
+  const [importedConversations, setImportedConversations] = useState<Record<string, Conversation>>({});
+  const [showImportPreview, setShowImportPreview] = useState(false);
+  const [importPreviewData, setImportPreviewData] = useState<{ messages: Message[]; userName: string } | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const allUsers = useMemo(() => [...mockUsers, ...importedUsers], [importedUsers]);
+
   const selectedUser = useMemo(
-    () => mockUsers.find((u) => u.id === selectedUserId),
-    [selectedUserId]
+    () => allUsers.find((u) => u.id === selectedUserId),
+    [selectedUserId, allUsers]
   );
   const conversation = useMemo(
-    () => mockConversations[selectedUserId],
-    [selectedUserId]
+    () => importedConversations[selectedUserId] || mockConversations[selectedUserId],
+    [selectedUserId, importedConversations]
   );
+
+  const handleFileImport = async (file: File) => {
+    setImportError(null);
+    try {
+      const result = await parseImportedFile(file);
+      setImportPreviewData(result);
+      setShowImportPreview(true);
+    } catch (err) {
+      setImportError(err instanceof Error ? err.message : "导入失败");
+    }
+  };
+
+  const confirmImport = () => {
+    if (!importPreviewData) return;
+    const { messages, userName } = importPreviewData;
+    const userId = `imported-${Date.now()}`;
+    const newUser: User = {
+      id: userId,
+      name: userName,
+      avatar: userName.slice(0, 2).toUpperCase(),
+      company: "导入数据",
+      title: "未知",
+      industry: "未知",
+      tags: [{ id: `t-import-${Date.now()}`, label: "导入", type: "behavior" }],
+      stage: "initial_inquiry",
+      intent: "unclear_need",
+      probability: 50,
+      riskLevel: "medium",
+      lastActive: new Date().toISOString(),
+      source: "文件导入",
+    };
+    const newConversation: Conversation = {
+      userId,
+      messages: messages.map(m => ({ ...m, userId })),
+    };
+
+    setImportedUsers(prev => [newUser, ...prev]);
+    setImportedConversations(prev => ({ ...prev, [userId]: newConversation }));
+    setSelectedUserId(userId);
+    setAnalysis(null);
+    setShowImportPreview(false);
+    setImportPreviewData(null);
+  };
+
+  const cancelImport = () => {
+    setShowImportPreview(false);
+    setImportPreviewData(null);
+    setImportError(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   const handleAnalyze = async () => {
     if (!conversation || !selectedUser) return;
@@ -118,11 +184,58 @@ export default function AnalysisPage() {
       <div className="flex w-[400px] shrink-0 flex-col border-r border-border">
         {/* User selector */}
         <div className="border-b border-border px-4 py-3">
-          <h2 className="mb-2.5 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-            客户对话
-          </h2>
+          <div className="mb-2.5 flex items-center justify-between">
+            <h2 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+              客户对话
+            </h2>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => {
+                  const sample = generateSampleText();
+                  const blob = new Blob([sample], { type: "text/plain" });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = "对话模板.txt";
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}
+                className="flex items-center gap-1 rounded-md px-2 py-1 text-[10px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                title="下载对话模板"
+              >
+                <Download className="h-3 w-3" />
+                模板
+              </button>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-1 rounded-md bg-primary/15 px-2.5 py-1 text-[11px] font-medium text-primary transition-all hover:bg-primary/25 active:scale-95"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                导入
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".txt,.docx"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleFileImport(file);
+                }}
+              />
+            </div>
+          </div>
+          {importError && (
+            <div className="mb-2 flex items-center gap-1.5 rounded-md bg-red-500/10 px-2.5 py-1.5 text-[11px] text-red-400">
+              <AlertTriangle className="h-3 w-3 shrink-0" />
+              {importError}
+              <button onClick={() => setImportError(null)} className="ml-auto">
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          )}
           <div className="flex flex-wrap gap-1.5">
-            {mockUsers.map((user) => (
+            {allUsers.map((user) => (
               <button
                 key={user.id}
                 onClick={() => {
@@ -138,11 +251,16 @@ export default function AnalysisPage() {
                 )}
               >
                 <Avatar className="h-5 w-5">
-                  <AvatarFallback className="text-[9px]">
+                  <AvatarFallback className={cn("text-[9px]", user.source === "文件导入" && "bg-cyan-500/20 text-cyan-400")}>
                     {user.avatar}
                   </AvatarFallback>
                 </Avatar>
                 {user.name}
+                {user.source === "文件导入" && (
+                  <span className="flex h-3.5 items-center rounded bg-cyan-500/15 px-1 text-[8px] text-cyan-400">
+                    导入
+                  </span>
+                )}
                 {user.probability >= 80 && (
                   <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-500/20">
                     <TrendingUp className="h-2 w-2 text-emerald-400" />
@@ -193,6 +311,69 @@ export default function AnalysisPage() {
             ))}
           </div>
         </ScrollArea>
+
+        {/* Import Preview Modal */}
+        {showImportPreview && importPreviewData && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+            <Card className="mx-4 w-full max-w-lg border-border shadow-2xl">
+              <div className="flex items-center justify-between border-b border-border px-5 py-3">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-cyan-400" />
+                  <span className="text-sm font-medium text-foreground">导入预览</span>
+                </div>
+                <button onClick={cancelImport} className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="px-5 py-3">
+                <div className="mb-3 flex items-center gap-2 text-[13px]">
+                  <span className="text-muted-foreground">识别用户：</span>
+                  <span className="font-semibold text-foreground">{importPreviewData.userName}</span>
+                  <Badge variant="outline" className="text-[10px] bg-cyan-500/10 text-cyan-400 border-cyan-500/20">
+                    {importPreviewData.messages.length} 条消息
+                  </Badge>
+                </div>
+                <ScrollArea className="max-h-[260px]">
+                  <div className="space-y-2">
+                    {importPreviewData.messages.slice(0, 8).map((msg, i) => (
+                      <div key={i} className={cn(
+                        "rounded-lg px-3 py-2 text-[12px]",
+                        msg.role === "user"
+                          ? "bg-secondary text-muted-foreground"
+                          : "bg-primary/5 text-foreground"
+                      )}>
+                        <span className="text-[10px] font-medium text-muted-foreground">
+                          {msg.role === "user" ? "客户" : "销售"}
+                        </span>
+                        <p className="mt-0.5 leading-relaxed">{msg.content}</p>
+                      </div>
+                    ))}
+                    {importPreviewData.messages.length > 8 && (
+                      <p className="text-center text-[11px] text-muted-foreground">
+                        …还有 {importPreviewData.messages.length - 8} 条消息
+                      </p>
+                    )}
+                  </div>
+                </ScrollArea>
+              </div>
+              <div className="flex gap-2 border-t border-border px-5 py-3">
+                <button
+                  onClick={cancelImport}
+                  className="flex-1 rounded-lg border border-border px-4 py-2 text-[13px] font-medium text-muted-foreground transition-all hover:bg-accent"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={confirmImport}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-[13px] font-medium text-primary-foreground transition-all hover:bg-primary/90 active:scale-[0.98]"
+                >
+                  <Upload className="h-3.5 w-3.5" />
+                  确认导入
+                </button>
+              </div>
+            </Card>
+          </div>
+        )}
 
         {/* Analyze button */}
         <div className="border-t border-border px-4 py-3">
