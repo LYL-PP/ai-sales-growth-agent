@@ -37,16 +37,17 @@ export function Sidebar() {
   return (
     <aside className="fixed left-0 top-0 z-40 flex h-full w-[220px] flex-col border-r border-border bg-sidebar">
       {/* Logo */}
-      <div className="flex h-14 items-center gap-2.5 border-b border-border px-5">
-        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15">
-          <Sparkles className="h-4 w-4 text-primary" />
+      <div className="flex h-14 items-center gap-3 border-b border-border px-4">
+        <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/30 to-primary/5 ring-1 ring-primary/20">
+          <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary/20 to-transparent" />
+          <Sparkles className="relative h-4 w-4 text-primary" />
         </div>
-        <div className="flex flex-col leading-none">
-          <span className="text-[13px] font-semibold tracking-tight text-foreground">
-            Growth Agent
+        <div className="flex flex-col leading-tight">
+          <span className="text-[14px] font-bold tracking-tight text-foreground">
+            Growth
           </span>
-          <span className="text-[10px] text-muted-foreground">
-            AI Sales OS
+          <span className="text-[14px] font-bold tracking-tight text-foreground -mt-0.5">
+            Agent
           </span>
         </div>
       </div>
