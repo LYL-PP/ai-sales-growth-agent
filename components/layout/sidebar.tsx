@@ -37,20 +37,14 @@ export function Sidebar() {
   return (
     <aside className="fixed left-0 top-0 z-40 flex h-full w-[220px] flex-col border-r border-border bg-sidebar">
       {/* Logo */}
-      <div className="flex h-14 items-center gap-3 border-b border-border px-4">
-        <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/30 to-primary/5 ring-1 ring-primary/20">
-          <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary/20 to-transparent" />
-          <Sparkles className="relative h-4 w-4 text-primary" />
+      <Link href="/" className="flex h-14 items-center gap-3 border-b border-border px-5 hover:bg-accent/30 transition-colors">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-blue-500 shadow-lg shadow-primary/20">
+          <Sparkles className="h-4 w-4 text-white" />
         </div>
-        <div className="flex flex-col leading-tight">
-          <span className="text-[14px] font-bold tracking-tight text-foreground">
-            Growth
-          </span>
-          <span className="text-[14px] font-bold tracking-tight text-foreground -mt-0.5">
-            Agent
-          </span>
-        </div>
-      </div>
+        <span className="text-[15px] font-bold tracking-tight text-foreground">
+          Growth Agent
+        </span>
+      </Link>
 
       {/* Nav */}
       <nav className="flex-1 space-y-0.5 px-3 py-4">
