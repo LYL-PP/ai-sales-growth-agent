@@ -93,19 +93,77 @@ function ProbabilityRing({ value }: { value: number }) {
 }
 
 function buildProfileFromUser(user: User): UserProfile {
+  // Try to load saved AI analysis for this user
+  let aiSummary = "这是通过文件导入的客户，尚未进行AI销售分析。请前往 AI 销售分析页对其进行分析。";
+  let intent = user.intent;
+  let stage = user.stage;
+  let riskLevel = user.riskLevel;
+  let probability = user.probability;
+  let tags = [...user.tags];
+  let followActions = [{ action: "建议通过AI销售分析了解该用户意向", channel: "phone" as const, timing: "今天内" }];
+  let followPriority: "urgent" | "high" | "normal" | "low" = "normal";
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let analysis: any = null;
+
+  try {
+    const saved = JSON.parse(localStorage.getItem("growth-agent-analysis") || "{}");
+    analysis = saved[user.id];
+    if (analysis) {
+      // Map analysis data to profile fields
+      const intentLabels: Record<string, string> = {
+        price_objection: "价格异议", hesitant: "犹豫", high_intent: "高意向",
+        watching: "观望", unclear_need: "需求不明确",
+      };
+      const stageLabels: Record<string, string> = {
+        initial_inquiry: "初步咨询", comparison: "对比阶段",
+        closing: "即将成交", at_risk: "流失风险",
+      };
+
+      intent = (analysis.intent?.primary as UserIntent) || intent;
+      stage = (analysis.stage?.current as UserStage) || stage;
+      riskLevel = (analysis.risk?.level as RiskLevel) || riskLevel;
+
+      aiSummary = `[AI 分析于 ${new Date(analysis.analyzedAt).toLocaleString("zh-CN")}] 意向：${intentLabels[analysis.intent?.primary] || "未知"}，阶段：${stageLabels[analysis.stage?.current] || "未知"}。${analysis.strategy?.recommendation || ""}`;
+
+      if (analysis.strategy?.shouldEscalate) {
+        followPriority = "urgent";
+      } else if (analysis.risk?.level === "high" || analysis.risk?.level === "critical") {
+        followPriority = "high";
+      }
+      followActions = (analysis.strategy?.nextActions || []).map((a: string) => ({
+        action: a, channel: "phone" as const, timing: "今天内",
+      }));
+
+      // Update tags based on analysis
+      if (analysis.intent?.primary) {
+        tags.push({ id: `ai-${Date.now()}-intent`, label: intentLabels[analysis.intent.primary] || "", type: "intent" });
+      }
+      if (analysis.risk?.level === "high" || analysis.risk?.level === "critical") {
+        tags.push({ id: `ai-${Date.now()}-risk`, label: analysis.risk.level === "critical" ? "极高风险" : "高风险", type: "risk" });
+      }
+    }
+  } catch {}
+
   return {
     ...user,
+    intent,
+    stage,
+    riskLevel,
+    probability: analysis?.risk?.level === "low" ? 85 : analysis?.risk?.level === "medium" ? 55 : 25,
     email: "",
     phone: "",
     createdAt: new Date().toISOString().slice(0, 10),
-    totalInteractions: 0,
+    totalInteractions: analysis ? 1 : 0,
     avgResponseTime: "",
-    behaviorTimeline: [],
-    aiSummary: "这是通过文件导入的客户，尚无详细画像数据。建议通过AI销售分析页对其进行分析后，系统将自动补充画像。",
-    followStrategy: {
-      priority: "normal",
-      actions: [{ action: "建议通过AI销售分析了解该用户意向", channel: "phone", timing: "今天内" }],
-    },
+    tags,
+    behaviorTimeline: analysis ? [{
+      id: `be-${Date.now()}`,
+      type: "chat" as const,
+      description: `AI 销售分析已完成（${new Date(analysis.analyzedAt).toLocaleString("zh-CN")}）`,
+      timestamp: analysis.analyzedAt || new Date().toISOString(),
+    }] : [],
+    aiSummary,
+    followStrategy: { priority: followPriority, actions: followActions },
   };
 }
 

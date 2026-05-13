@@ -60,7 +60,13 @@ const riskLabelMap: Record<RiskLevel, string> = {
 export default function AnalysisPage() {
   const [selectedUserId, setSelectedUserId] = useState("u1");
   const [isLoading, setLoading] = useState(false);
-  const [analysis, setAnalysis] = useState<AIAnalysis | null>(null);
+  const [analysis, setAnalysis] = useState<AIAnalysis | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const saved = JSON.parse(localStorage.getItem("growth-agent-analysis") || "{}");
+      return saved["u1"] || null;
+    } catch { return null; }
+  });
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -192,6 +198,12 @@ export default function AnalysisPage() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setAnalysis(data);
+      // Persist to localStorage
+      try {
+        const saved = JSON.parse(localStorage.getItem("growth-agent-analysis") || "{}");
+        saved[selectedUserId] = { ...data, analyzedAt: new Date().toISOString() };
+        localStorage.setItem("growth-agent-analysis", JSON.stringify(saved));
+      } catch {}
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "分析失败"
@@ -285,8 +297,14 @@ export default function AnalysisPage() {
                 key={user.id}
                 onClick={() => {
                   setSelectedUserId(user.id);
-                  setAnalysis(null);
                   setError(null);
+                  // Try to restore previous analysis from localStorage
+                  try {
+                    const saved = JSON.parse(localStorage.getItem("growth-agent-analysis") || "{}");
+                    setAnalysis(saved[user.id] || null);
+                  } catch {
+                    setAnalysis(null);
+                  }
                 }}
                 className={cn(
                   "flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all",
