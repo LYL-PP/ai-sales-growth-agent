@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { mockUsers, mockConversations } from "@/lib/mock";
 import { parseImportedFile, generateSampleText } from "@/lib/import-parser";
 import { Card } from "@/components/ui/card";
@@ -31,6 +31,7 @@ import {
   X,
   FileText,
   Download,
+  Trash2,
 } from "lucide-react";
 import type { AIAnalysis, UserIntent, UserStage, RiskLevel, Message, User, Conversation } from "@/types";
 
@@ -64,12 +65,41 @@ export default function AnalysisPage() {
   const [copied, setCopied] = useState(false);
 
   // Import state
-  const [importedUsers, setImportedUsers] = useState<User[]>([]);
-  const [importedConversations, setImportedConversations] = useState<Record<string, Conversation>>({});
+  const [importedUsers, setImportedUsers] = useState<User[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const saved = localStorage.getItem("growth-agent-imported-users");
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
+  const [importedConversations, setImportedConversations] = useState<Record<string, Conversation>>(() => {
+    if (typeof window === "undefined") return {};
+    try {
+      const saved = localStorage.getItem("growth-agent-imported-conversations");
+      return saved ? JSON.parse(saved) : {};
+    } catch { return {}; }
+  });
   const [showImportPreview, setShowImportPreview] = useState(false);
   const [importPreviewData, setImportPreviewData] = useState<{ messages: Message[]; userName: string } | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Persist to localStorage
+  useEffect(() => {
+    localStorage.setItem("growth-agent-imported-users", JSON.stringify(importedUsers));
+  }, [importedUsers]);
+
+  useEffect(() => {
+    localStorage.setItem("growth-agent-imported-conversations", JSON.stringify(importedConversations));
+  }, [importedConversations]);
+
+  const clearImported = () => {
+    setImportedUsers([]);
+    setImportedConversations({});
+    localStorage.removeItem("growth-agent-imported-users");
+    localStorage.removeItem("growth-agent-imported-conversations");
+    setSelectedUserId("u1");
+  };
 
   const allUsers = useMemo(() => [...mockUsers, ...importedUsers], [importedUsers]);
 
@@ -213,6 +243,15 @@ export default function AnalysisPage() {
                 <Plus className="h-3.5 w-3.5" />
                 导入
               </button>
+              {importedUsers.length > 0 && (
+                <button
+                  onClick={clearImported}
+                  className="flex items-center gap-1 rounded-md px-2 py-1 text-[10px] text-muted-foreground transition-colors hover:bg-red-500/10 hover:text-red-400"
+                  title="清除所有导入数据"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              )}
               <input
                 ref={fileInputRef}
                 type="file"
