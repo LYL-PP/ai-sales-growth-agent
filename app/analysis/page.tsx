@@ -104,7 +104,10 @@ export default function AnalysisPage() {
     setSelectedUserId("u1");
   };
 
-  const allUsers = useMemo(() => [...mockUsers, ...importedUsers], [importedUsers]);
+  const allUsers = useMemo(
+    () => mounted ? [...mockUsers, ...importedUsers] : mockUsers,
+    [mounted, importedUsers]
+  );
 
   const selectedUser = useMemo(
     () => allUsers.find((u) => u.id === selectedUserId),
