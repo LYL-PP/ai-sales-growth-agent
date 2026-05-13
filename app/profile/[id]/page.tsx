@@ -1,6 +1,6 @@
-"use client";
+﻿"use client";
 
-import { use, useMemo, useState, useEffect } from "react";
+import { use, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { mockUserProfiles, mockUsers } from "@/lib/mock";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,30 +24,29 @@ import {
   PhoneCall,
   Eye,
   TrendingUp,
-  ChevronDown,
 } from "lucide-react";
 import type { RiskLevel, UserStage, UserIntent, BehaviorEvent, User, UserProfile } from "@/types";
 
 const riskMap: Record<RiskLevel, { label: string; color: string; bg: string }> = {
-  low: { label: "\u4f4e\u98ce\u9669", color: "text-emerald-400", bg: "bg-emerald-500/10" },
-  medium: { label: "\u4e2d\u98ce\u9669", color: "text-amber-400", bg: "bg-amber-500/10" },
-  high: { label: "\u9ad8\u98ce\u9669", color: "text-orange-400", bg: "bg-orange-500/10" },
-  critical: { label: "\u6781\u9ad8\u98ce\u9669", color: "text-red-400", bg: "bg-red-500/10" },
+  low: { label: "低风险", color: "text-emerald-400", bg: "bg-emerald-500/10" },
+  medium: { label: "中风险", color: "text-amber-400", bg: "bg-amber-500/10" },
+  high: { label: "高风险", color: "text-orange-400", bg: "bg-orange-500/10" },
+  critical: { label: "极高风险", color: "text-red-400", bg: "bg-red-500/10" },
 };
 
 const stageMap: Record<UserStage, string> = {
-  initial_inquiry: "\u521d\u6b65\u54a8\u8be2",
-  comparison: "\u5bf9\u6bd4\u9636\u6bb5",
-  closing: "\u5373\u5c06\u6210\u4ea4",
-  at_risk: "\u6d41\u5931\u98ce\u9669",
+  initial_inquiry: "初步咨询",
+  comparison: "对比阶段",
+  closing: "即将成交",
+  at_risk: "流失风险",
 };
 
 const intentMap: Record<UserIntent, string> = {
-  price_objection: "\u4ef7\u683c\u5f02\u8bae",
-  hesitant: "\u72b9\u8c6b",
-  high_intent: "\u9ad8\u610f\u5411",
-  watching: "\u89c2\u671b",
-  unclear_need: "\u9700\u6c42\u4e0d\u660e\u786e",
+  price_objection: "价格异议",
+  hesitant: "犹豫",
+  high_intent: "高意向",
+  watching: "观望",
+  unclear_need: "需求不明确",
 };
 
 const behaviorIcons: Record<BehaviorEvent["type"], string> = {
@@ -82,31 +81,12 @@ function ProbabilityRing({ value }: { value: number }) {
   return (
     <div className="relative flex items-center justify-center">
       <svg width="88" height="88" viewBox="0 0 88 88">
-        <circle
-          cx="44"
-          cy="44"
-          r={radius}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="6"
-          className="text-secondary"
-        />
-        <circle
-          cx="44"
-          cy="44"
-          r={radius}
-          fill="none"
-          strokeWidth="6"
-          strokeLinecap="round"
-          className={cn("transition-all duration-1000", color)}
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          transform="rotate(-90 44 44)"
-        />
+        <circle cx="44" cy="44" r={radius} fill="none" stroke="currentColor" strokeWidth="6" className="text-secondary" />
+        <circle cx="44" cy="44" r={radius} fill="none" strokeWidth="6" strokeLinecap="round" className={cn("transition-all duration-1000", color)} strokeDasharray={circumference} strokeDashoffset={offset} transform="rotate(-90 44 44)" />
       </svg>
       <div className="absolute flex flex-col items-center">
         <span className="text-xl font-bold text-foreground">{value}%</span>
-        <span className="text-[9px] text-muted-foreground">\u6210\u4ea4\u6982\u7387</span>
+        <span className="text-[9px] text-muted-foreground">成交概率</span>
       </div>
     </div>
   );
@@ -129,11 +109,7 @@ function buildProfileFromUser(user: User): UserProfile {
   };
 }
 
-export default function ProfilePage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default function ProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
 
@@ -156,48 +132,59 @@ export default function ProfilePage({
   }, [id, allUsers]);
 
   if (!profile) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <p className="text-muted-foreground">\u7528\u6237\u4e0d\u5b58\u5728</p>
-      </div>
-    );
+    return <div className="flex h-full items-center justify-center"><p className="text-muted-foreground">用户不存在</p></div>;
   }
 
   const risk = riskMap[profile.riskLevel];
   const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-    MessageSquare: MessageSquare,
-    Eye: Eye,
-    MousePointerClick: MousePointerClick,
-    FileText: FileText,
-    PhoneCall: PhoneCall,
+    MessageSquare, Eye, MousePointerClick, FileText, PhoneCall,
   };
 
   return (
     <div className="mx-auto max-w-[960px] p-6">
-      <div className="mb-6 flex items-center gap-2">
-        <UserCircle className="h-4 w-4 text-primary" />
-        <h2 className="text-[13px] font-semibold uppercase tracking-widest text-muted-foreground">
-          \u7528\u6237\u753b\u50cf
-        </h2>
+      {/* Header with user selector */}
+      <div className="mb-6 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <UserCircle className="h-4 w-4 text-primary" />
+          <h2 className="text-[13px] font-semibold uppercase tracking-widest text-muted-foreground">用户画像</h2>
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          {allUsers.map((user) => (
+            <button
+              key={user.id}
+              onClick={() => router.push(`/profile/${user.id}`)}
+              className={cn(
+                "flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all",
+                id === user.id
+                  ? "bg-primary/15 text-primary ring-1 ring-primary/20"
+                  : "bg-secondary text-muted-foreground hover:bg-accent hover:text-foreground"
+              )}
+            >
+              <Avatar className="h-5 w-5">
+                <AvatarFallback className={cn("text-[9px]", user.source === "文件导入" && "bg-cyan-500/20 text-cyan-400")}>
+                  {user.avatar}
+                </AvatarFallback>
+              </Avatar>
+              {user.name}
+              {user.source === "文件导入" && (
+                <span className="flex h-3.5 items-center rounded bg-cyan-500/15 px-1 text-[8px] text-cyan-400">导入</span>
+              )}
+            </button>
+          ))}
+        </div>
       </div>
 
       <Card className="mb-5 border-border bg-card/50">
         <CardContent className="p-5">
           <div className="flex items-start gap-5">
             <Avatar className="h-14 w-14 ring-2 ring-border">
-              <AvatarFallback className="bg-primary/15 text-lg font-semibold text-primary">
-                {profile.avatar}
-              </AvatarFallback>
+              <AvatarFallback className="bg-primary/15 text-lg font-semibold text-primary">{profile.avatar}</AvatarFallback>
             </Avatar>
             <div className="flex-1">
               <div className="mb-1 flex items-center gap-2.5">
                 <h1 className="text-lg font-semibold text-foreground">{profile.name}</h1>
-                <Badge variant="outline" className={cn("text-[11px]", risk.bg, risk.color)}>
-                  {risk.label}
-                </Badge>
-                <Badge variant="outline" className="bg-primary/10 text-[11px] text-primary border-primary/20">
-                  {stageMap[profile.stage]}
-                </Badge>
+                <Badge variant="outline" className={cn("text-[11px]", risk.bg, risk.color)}>{risk.label}</Badge>
+                <Badge variant="outline" className="bg-primary/10 text-[11px] text-primary border-primary/20">{stageMap[profile.stage]}</Badge>
               </div>
               <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-muted-foreground">
                 <span className="flex items-center gap-1"><Building2 className="h-3 w-3" />{profile.company}</span>
@@ -208,9 +195,7 @@ export default function ProfilePage({
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {profile.tags.map((tag) => (
-                  <Badge key={tag.id} variant="outline" className={cn("text-[11px]", tagColors[tag.type])}>
-                    {tag.label}
-                  </Badge>
+                  <Badge key={tag.id} variant="outline" className={cn("text-[11px]", tagColors[tag.type])}>{tag.label}</Badge>
                 ))}
               </div>
             </div>
@@ -225,7 +210,7 @@ export default function ProfilePage({
             <CardContent className="p-4">
               <div className="mb-3 flex items-center gap-2">
                 <Brain className="h-4 w-4 text-primary" />
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">AI \u7528\u6237\u6d1e\u5bdf</h3>
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">AI 用户洞察</h3>
               </div>
               <p className="text-[13px] leading-relaxed text-muted-foreground">{profile.aiSummary}</p>
             </CardContent>
@@ -233,20 +218,20 @@ export default function ProfilePage({
 
           <Card className="border-border bg-card/50">
             <CardContent className="p-4">
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">\u4e92\u52a8\u6570\u636e</h3>
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">互动数据</h3>
               <div className="grid grid-cols-2 gap-4">
                 {[
-                  { label: "\u603b\u4e92\u52a8\u6b21\u6570", value: profile.totalInteractions, icon: MessageSquare },
-                  { label: "\u5e73\u5747\u54cd\u5e94", value: profile.avgResponseTime, icon: Clock },
-                  { label: "\u610f\u5411\u5206\u7c7b", value: intentMap[profile.intent], icon: TrendingUp },
-                  { label: "\u6765\u6e90\u6e20\u9053", value: profile.source, icon: Globe },
+                  { label: "总互动次数", value: profile.totalInteractions, icon: MessageSquare },
+                  { label: "平均响应", value: profile.avgResponseTime, icon: Clock },
+                  { label: "意向分类", value: intentMap[profile.intent], icon: TrendingUp },
+                  { label: "来源渠道", value: profile.source, icon: Globe },
                 ].map((stat, i) => (
                   <div key={i} className="rounded-lg bg-secondary/50 p-3">
                     <div className="mb-1 flex items-center gap-1.5">
                       <stat.icon className="h-3 w-3 text-muted-foreground" />
                       <span className="text-[10px] text-muted-foreground">{stat.label}</span>
                     </div>
-                    <p className="text-sm font-medium text-foreground">{stat.value}</p>
+                    <p className="text-sm font-medium text-foreground">{stat.value || "--"}</p>
                   </div>
                 ))}
               </div>
@@ -259,27 +244,31 @@ export default function ProfilePage({
             <CardContent className="p-4">
               <div className="mb-3 flex items-center gap-2">
                 <Clock className="h-4 w-4 text-primary" />
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">\u884c\u4e3a\u65f6\u95f4\u7ebf</h3>
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">行为时间线</h3>
               </div>
               <ScrollArea className="h-[240px]">
                 <div>
-                  {profile.behaviorTimeline.map((event) => {
-                    const Icon = iconMap[behaviorIcons[event.type]];
-                    return (
-                      <div key={event.id} className="flex gap-3 pb-3">
-                        <div className="flex flex-col items-center">
-                          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10">
-                            <Icon className="h-3 w-3 text-primary" />
+                  {profile.behaviorTimeline.length > 0 ? (
+                    profile.behaviorTimeline.map((event) => {
+                      const Icon = iconMap[behaviorIcons[event.type]];
+                      return (
+                        <div key={event.id} className="flex gap-3 pb-3">
+                          <div className="flex flex-col items-center">
+                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10">
+                              <Icon className="h-3 w-3 text-primary" />
+                            </div>
+                            <div className="mt-0.5 h-full w-px bg-border" />
                           </div>
-                          <div className="mt-0.5 h-full w-px bg-border" />
+                          <div className="flex-1 pb-2">
+                            <p className="text-[12px] text-foreground">{event.description}</p>
+                            <p className="text-[10px] text-muted-foreground">{event.timestamp.slice(5, 16).replace("T", " ")}</p>
+                          </div>
                         </div>
-                        <div className="flex-1 pb-2">
-                          <p className="text-[12px] text-foreground">{event.description}</p>
-                          <p className="text-[10px] text-muted-foreground">{event.timestamp.slice(5, 16).replace("T", " ")}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })
+                  ) : (
+                    <p className="text-[12px] text-muted-foreground py-4 text-center">暂无行为数据，建议先进行AI销售分析</p>
+                  )}
                 </div>
               </ScrollArea>
             </CardContent>
@@ -289,15 +278,13 @@ export default function ProfilePage({
             <CardContent className="p-4">
               <div className="mb-3 flex items-center gap-2">
                 <ArrowRight className="h-4 w-4 text-primary" />
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">\u8ddf\u8fdb\u7b56\u7565</h3>
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">跟进策略</h3>
                 <Badge variant="outline" className={cn("ml-auto text-[10px]",
-                  profile.followStrategy.priority === "urgent"
-                    ? "bg-red-500/10 text-red-400 border-red-500/20"
-                    : profile.followStrategy.priority === "high"
-                    ? "bg-orange-500/10 text-orange-400 border-orange-500/20"
-                    : "bg-secondary text-muted-foreground"
+                  profile.followStrategy.priority === "urgent" ? "bg-red-500/10 text-red-400 border-red-500/20"
+                  : profile.followStrategy.priority === "high" ? "bg-orange-500/10 text-orange-400 border-orange-500/20"
+                  : "bg-secondary text-muted-foreground"
                 )}>
-                  {profile.followStrategy.priority === "urgent" ? "\u7d27\u6025" : profile.followStrategy.priority === "high" ? "\u9ad8\u4f18\u5148\u7ea7" : profile.followStrategy.priority === "normal" ? "\u5e38\u89c4" : "\u4f4e\u4f18\u5148\u7ea7"}
+                  {profile.followStrategy.priority === "urgent" ? "紧急" : profile.followStrategy.priority === "high" ? "高优先级" : profile.followStrategy.priority === "normal" ? "常规" : "低优先级"}
                 </Badge>
               </div>
               <div className="space-y-2.5">
@@ -308,7 +295,7 @@ export default function ProfilePage({
                       <p className="text-[12px] font-medium text-foreground">{action.action}</p>
                       <div className="mt-1 flex items-center gap-2">
                         <Badge variant="outline" className="text-[10px] bg-secondary text-muted-foreground">
-                          {action.channel === "phone" ? "\u7535\u8bdd" : action.channel === "wechat" ? "\u5fae\u4fe1" : action.channel === "email" ? "\u90ae\u4ef6" : "\u77ed\u4fe1"}
+                          {action.channel === "phone" ? "电话" : action.channel === "wechat" ? "微信" : action.channel === "email" ? "邮件" : "短信"}
                         </Badge>
                         <span className="text-[10px] text-muted-foreground">{action.timing}</span>
                       </div>
