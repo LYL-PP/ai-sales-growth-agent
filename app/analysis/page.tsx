@@ -60,13 +60,7 @@ const riskLabelMap: Record<RiskLevel, string> = {
 export default function AnalysisPage() {
   const [selectedUserId, setSelectedUserId] = useState("u1");
   const [isLoading, setLoading] = useState(false);
-  const [analysis, setAnalysis] = useState<AIAnalysis | null>(() => {
-    if (typeof window === "undefined") return null;
-    try {
-      const saved = JSON.parse(localStorage.getItem("growth-agent-analysis") || "{}");
-      return saved["u1"] || null;
-    } catch { return null; }
-  });
+  const [analysis, setAnalysis] = useState<AIAnalysis | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -89,6 +83,16 @@ export default function AnalysisPage() {
   const [importPreviewData, setImportPreviewData] = useState<{ messages: Message[]; userName: string } | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Restore analysis from localStorage after mount
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("growth-agent-analysis") || "{}");
+      if (saved[selectedUserId]) {
+        setAnalysis(saved[selectedUserId]);
+      }
+    } catch {}
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Persist to localStorage
   useEffect(() => {
