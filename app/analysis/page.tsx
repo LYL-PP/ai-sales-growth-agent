@@ -314,64 +314,59 @@ export default function AnalysisPage() {
 
         {/* Import Preview Modal */}
         {showImportPreview && importPreviewData && (
-          <div className="absolute inset-0 z-50 overflow-y-auto bg-background/90 backdrop-blur-sm py-10">
-            <Card className="mx-auto w-full max-w-lg border-border shadow-2xl">
-              <div className="flex items-center justify-between border-b border-border px-5 py-3">
-                <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-cyan-400" />
-                  <span className="text-sm font-medium text-foreground">导入预览</span>
-                </div>
-                <button onClick={cancelImport} className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground">
-                  <X className="h-4 w-4" />
-                </button>
+          <div className="absolute inset-0 z-50 flex flex-col bg-card">
+            {/* Header */}
+            <div className="flex shrink-0 items-center justify-between border-b border-border px-5 py-3">
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-cyan-400" />
+                <span className="text-sm font-medium text-foreground">导入预览</span>
+                <Badge variant="outline" className="text-[10px] bg-cyan-500/10 text-cyan-400 border-cyan-500/20">
+                  {importPreviewData.messages.length} 条消息
+                </Badge>
               </div>
-              <div className="px-5 py-3">
-                <div className="mb-3 flex items-center gap-2 text-[13px]">
-                  <span className="text-muted-foreground">识别用户：</span>
-                  <span className="font-semibold text-foreground">{importPreviewData.userName}</span>
-                  <Badge variant="outline" className="text-[10px] bg-cyan-500/10 text-cyan-400 border-cyan-500/20">
-                    {importPreviewData.messages.length} 条消息
-                  </Badge>
-                </div>
-                <ScrollArea className="max-h-[260px]">
-                  <div className="space-y-2">
-                    {importPreviewData.messages.slice(0, 8).map((msg, i) => (
-                      <div key={i} className={cn(
-                        "rounded-lg px-3 py-2 text-[12px]",
-                        msg.role === "user"
-                          ? "bg-secondary text-muted-foreground"
-                          : "bg-primary/5 text-foreground"
-                      )}>
-                        <span className="text-[10px] font-medium text-muted-foreground">
-                          {msg.role === "user" ? "客户" : "销售"}
-                        </span>
-                        <p className="mt-0.5 leading-relaxed">{msg.content}</p>
-                      </div>
-                    ))}
-                    {importPreviewData.messages.length > 8 && (
-                      <p className="text-center text-[11px] text-muted-foreground">
-                        …还有 {importPreviewData.messages.length - 8} 条消息
-                      </p>
-                    )}
+              <button onClick={cancelImport} className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto px-5 py-3">
+              <p className="mb-3 text-[13px] text-muted-foreground">
+                识别用户：<span className="font-semibold text-foreground">{importPreviewData.userName}</span>
+              </p>
+              <div className="space-y-2">
+                {importPreviewData.messages.map((msg, i) => (
+                  <div key={i} className={cn(
+                    "rounded-lg px-3 py-2 text-[12px]",
+                    msg.role === "user"
+                      ? "bg-secondary text-muted-foreground"
+                      : "bg-primary/5 text-foreground"
+                  )}>
+                    <span className="text-[10px] font-medium text-muted-foreground">
+                      {msg.role === "user" ? "客户" : "销售"}
+                    </span>
+                    <p className="mt-0.5 leading-relaxed">{msg.content}</p>
                   </div>
-                </ScrollArea>
+                ))}
               </div>
-              <div className="flex gap-2 border-t border-border px-5 py-3">
-                <button
-                  onClick={cancelImport}
-                  className="flex-1 rounded-lg border border-border px-4 py-2 text-[13px] font-medium text-muted-foreground transition-all hover:bg-accent"
-                >
-                  取消
-                </button>
-                <button
-                  onClick={confirmImport}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-[13px] font-medium text-primary-foreground transition-all hover:bg-primary/90 active:scale-[0.98]"
-                >
-                  <Upload className="h-3.5 w-3.5" />
-                  确认导入
-                </button>
-              </div>
-            </Card>
+            </div>
+
+            {/* Footer buttons - always visible */}
+            <div className="flex shrink-0 gap-2 border-t border-border px-5 py-3">
+              <button
+                onClick={cancelImport}
+                className="flex-1 rounded-lg border border-border px-4 py-2.5 text-[13px] font-medium text-muted-foreground transition-all hover:bg-accent hover:text-foreground"
+              >
+                取消
+              </button>
+              <button
+                onClick={confirmImport}
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-[13px] font-medium text-primary-foreground transition-all hover:bg-primary/90 active:scale-[0.98]"
+              >
+                <Upload className="h-3.5 w-3.5" />
+                确认导入
+              </button>
+            </div>
           </div>
         )}
 
