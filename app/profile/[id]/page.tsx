@@ -1,7 +1,8 @@
 "use client";
 
-import { use, useMemo } from "react";
-import { mockUserProfiles } from "@/lib/mock";
+import { use, useMemo, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { mockUserProfiles, mockUsers } from "@/lib/mock";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -23,8 +24,9 @@ import {
   PhoneCall,
   Eye,
   TrendingUp,
+  ChevronDown,
 } from "lucide-react";
-import type { RiskLevel, UserStage, UserIntent, BehaviorEvent } from "@/types";
+import type { RiskLevel, UserStage, UserIntent, BehaviorEvent, User, UserProfile } from "@/types";
 
 const riskMap: Record<RiskLevel, { label: string; color: string; bg: string }> = {
   low: { label: "\u4f4e\u98ce\u9669", color: "text-emerald-400", bg: "bg-emerald-500/10" },
@@ -110,15 +112,48 @@ function ProbabilityRing({ value }: { value: number }) {
   );
 }
 
+function buildProfileFromUser(user: User): UserProfile {
+  return {
+    ...user,
+    email: "",
+    phone: "",
+    createdAt: new Date().toISOString().slice(0, 10),
+    totalInteractions: 0,
+    avgResponseTime: "",
+    behaviorTimeline: [],
+    aiSummary: "这是通过文件导入的客户，尚无详细画像数据。建议通过AI销售分析页对其进行分析后，系统将自动补充画像。",
+    followStrategy: {
+      priority: "normal",
+      actions: [{ action: "建议通过AI销售分析了解该用户意向", channel: "phone", timing: "今天内" }],
+    },
+  };
+}
+
 export default function ProfilePage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const router = useRouter();
+
+  const [importedUsers, setImportedUsers] = useState<User[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const saved = localStorage.getItem("growth-agent-imported-users");
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
+
+  const allUsers = useMemo(() => [...mockUsers, ...importedUsers], [importedUsers]);
+
   const profile = useMemo(() => {
-    return mockUserProfiles[id] || mockUserProfiles["u1"];
-  }, [id]);
+    const existing = mockUserProfiles[id];
+    if (existing) return existing;
+    const imported = allUsers.find(u => u.id === id);
+    if (imported) return buildProfileFromUser(imported);
+    return mockUserProfiles["u1"];
+  }, [id, allUsers]);
 
   if (!profile) {
     return (
