@@ -566,7 +566,7 @@ export default function AnalysisPage() {
                         </div>
                       </div>
                       <div className="flex flex-wrap gap-1">
-                        {stage.indicators.map((ind, i) => (
+                        {(stage.indicators || []).map((ind: string, i: number) => (
                           <span
                             key={i}
                             className="rounded-md bg-secondary px-2 py-0.5 text-[11px] text-muted-foreground"
@@ -599,7 +599,7 @@ export default function AnalysisPage() {
                     </Badge>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
-                    {risk.factors.map((f, i) => (
+                    {(risk.factors || []).map((f: string, i: number) => (
                       <span
                         key={i}
                         className="flex items-center gap-1 rounded-md bg-secondary px-2 py-1 text-[11px] text-muted-foreground"
@@ -627,7 +627,7 @@ export default function AnalysisPage() {
                       {strategy.recommendation}
                     </p>
                     <div className="space-y-1.5">
-                      {strategy.nextActions.map((action, i) => (
+                      {(strategy.nextActions || []).map((action: string, i: number) => (
                         <div
                           key={i}
                           className="flex items-start gap-2 text-[12px] text-muted-foreground"
