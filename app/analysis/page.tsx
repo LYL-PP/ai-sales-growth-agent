@@ -181,7 +181,7 @@ export default function AnalysisPage() {
   return (
     <div className="flex h-full">
       {/* Left: User List + Chat */}
-      <div className="flex w-[400px] shrink-0 flex-col border-r border-border">
+      <div className="relative flex w-[400px] shrink-0 flex-col border-r border-border">
         {/* User selector */}
         <div className="border-b border-border px-4 py-3">
           <div className="mb-2.5 flex items-center justify-between">
@@ -314,8 +314,8 @@ export default function AnalysisPage() {
 
         {/* Import Preview Modal */}
         {showImportPreview && importPreviewData && (
-          <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-            <Card className="mx-4 w-full max-w-lg border-border shadow-2xl">
+          <div className="absolute inset-0 z-50 overflow-y-auto bg-background/90 backdrop-blur-sm py-10">
+            <Card className="mx-auto w-full max-w-lg border-border shadow-2xl">
               <div className="flex items-center justify-between border-b border-border px-5 py-3">
                 <div className="flex items-center gap-2">
                   <FileText className="h-4 w-4 text-cyan-400" />
